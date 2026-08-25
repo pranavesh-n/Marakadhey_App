@@ -1,4 +1,4 @@
-# ⏰ Marakadhey (மறக்காதே) — Don't Lose Opportunities
+# ⏰ Marakadhey (மறக்காதே) — Never Miss Opportunities
 
 <div align="center">
   <img src="marakadhey_flutter/assets/logo.png" width="100" height="100" alt="Marakadhey Logo" />
