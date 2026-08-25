@@ -41,6 +41,3 @@ example
 # generated native folders
 /ios
 /android
-
-# temporary git backups created while flattening nested starters
-git-bak-marakadhey/

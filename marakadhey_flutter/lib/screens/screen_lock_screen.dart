@@ -142,9 +142,9 @@ class _ScreenLockScreenState extends State<ScreenLockScreen> with SingleTickerPr
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
+                                color: Colors.black12,
+                                blurRadius: 6,
+                                spreadRadius: 2,
                               ),
                             ],
                           ),
@@ -155,16 +155,26 @@ class _ScreenLockScreenState extends State<ScreenLockScreen> with SingleTickerPr
                         ),
                         const SizedBox(height: 18),
 
-                        // Welcome Header
-                        const Text(
-                          'Welcome Back, Opportunity Seeker 👋',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -0.3,
-                          ),
+                        // Welcome Header with dynamic greeting
+                        Builder(
+                          builder: (context) {
+                            final auth = context.watch<AuthService>();
+                            final user = auth.currentUser;
+                            String greetingName = 'Opportunity Seeker';
+                            if (user != null && user.displayName?.trim().isNotEmpty == true) {
+                              greetingName = user.displayName!.trim().split(' ').first;
+                            }
+                            return Text(
+                              'Welcome Back, $greetingName 👋',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 21,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.3,
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 6),
 
