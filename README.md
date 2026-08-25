@@ -1,56 +1,118 @@
-# Welcome to your Expo app 👋
+# ⏰ Marakadhey (மறக்காதே) — Don't Lose Opportunities
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<div align="center">
+  <img src="marakadhey_flutter/assets/logo.png" width="100" height="100" alt="Marakadhey Logo" />
+  <br />
+  <strong>The Ultimate Opportunity Tracker & High-Reliability Deadline Manager for Students & Professionals</strong>
+  <p>Never miss another internship application, hackathon deadline, coding contest, scholarship, or webinar registration.</p>
+</div>
 
-## Get started
+---
 
-1. Install dependencies
+## 🌟 Overview
 
-   ```bash
-   npm install
-   ```
+**Marakadhey** (Tamil for *"Do Not Forget"*) is a purpose-built opportunity tracking ecosystem designed to solve the critical problem of missed deadlines and forgotten applications. 
 
-2. Start the app
+Whether you discover opportunities through WhatsApp groups, LinkedIn, Telegram, Discord, or campus portals, Marakadhey allows you to capture them instantly via Android native share targets or manual entry, schedule guaranteed full-screen wake alarms, and track your application lifecycle end-to-end.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🚀 Key Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 1. 🚨 Zero-Latency, Doze-Exempt Deadline Alarms
+- **Guaranteed Ringing on Locked Screens:** Built on native Android `AlarmManager.setAlarmClock()` and full-screen intent receivers (`USE_FULL_SCREEN_INTENT`), ensuring alarms ring on time even in battery-saving Doze mode.
+- **Ringing Alarm Screen:** 
+  - Vivid category tags and opportunity details.
+  - One-tap **"🌐 Open Application Link"** to launch directly into the job/contest application portal.
+  - Flexible **Quick Snooze Chips** (`5m`, `10m`, `15m`, `30m`).
+  - Emergency turn-off and interactive notification banners.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 2. ⚡ Android Native Share Target
+- Share opportunity URLs and text directly from **LinkedIn, WhatsApp, Chrome, or Twitter/X** into Marakadhey.
+- Automatic URL and opportunity title extraction with instant pre-filling.
 
-## Get a fresh project
+### 3. 🛡️ Sikkanam-Style Screen Lock & Biometrics
+- Sleek 4-digit PIN authentication with haptic feedback and error animations.
+- Optional fingerprint / face unlock via Android BiometricPrompt (`local_auth`).
+- Configurable auto-lock timeout (Immediate, 1 min, 5 min, 15 min).
+- Safe recovery and reset flow.
 
-When you're ready, run:
+### 4. 🔄 Extension Workflow Automation
+- **Mark Completed on Open:** Automatically marks opportunities as completed when tapping "Open Link".
+- **Clean Inbox View:** Filter completed items while keeping them indexed under the *Completed* tab.
+- **Auto-Delete 90-Day Old Archive:** Automatic garbage collection for completed opportunities older than 90 days to keep the database lightweight.
 
-```bash
-npm run reset-project
+### 5. 📦 Seamless Backup, Restore & JSON Transfer
+- **1-Click Export:** Export all opportunities as structured JSON.
+- **Universal Import:** Compatible with wrapped schemas and raw lists with per-item validation.
+- **Clipboard Sync:** Copy/paste JSON directly for fast device-to-device migration.
+
+### 6. 🪶 Ultra-Lightweight & Optimized Binary
+- Compact **19.5 MB** release APK (down from 57+ MB).
+- Multi-ABI splits supporting Android 5.0 (Lollipop) all the way up to Android 15 & 16.
+- Tree-shaken icons and obfuscated release symbols.
+
+---
+
+## 📂 Project Architecture
+
+```
+marakadhey_app/
+├── marakadhey_mobile.apk          # Production Release APK (~19.5 MB)
+├── marakadhey_flutter/            # Flutter Cross-Platform Client
+│   ├── android/                   # Native Android Engine (Kotlin)
+│   │   ├── app/src/main/kotlin/com/marakadhey/app/
+│   │   │   ├── MainActivity.kt        # Native MethodChannel & Share Receiver
+│   │   │   ├── AlarmReceiver.kt       # High-priority WakeLock BroadcastReceiver
+│   │   │   ├── AlarmActivity.kt       # Full-screen Ringing Alarm Screen
+│   │   │   ├── AlarmSnoozeReceiver.kt # Notification Action Snooze Handler
+│   │   │   └── AlarmSoundPlayer.kt    # Ringtone & Audio Focus Manager
+│   ├── lib/
+│   │   ├── models/                # Opportunity & Category Data Models
+│   │   ├── providers/             # OpportunityProvider State Management
+│   │   ├── screens/               # Inbox, Add Opportunity, Settings, PIN Lock
+│   │   ├── services/              # Notification, Storage, Security & Auth
+│   │   └── widgets/               # Opportunity Cards, Stats, Headers, Chips
+│   └── test/                      # Automated Unit & Integration Tests
+└── src/                           # Web & Extension Integration Specs
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+## 🛠️ Tech Stack
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+- **Mobile Framework:** [Flutter](https://flutter.dev/) (Dart 3.x)
+- **Native Android:** Kotlin, Android `AlarmManager`, `KeyguardManager`, `NotificationManager`
+- **State Management:** Provider Architecture
+- **Local Persistence:** SharedPreferences & Secure Storage
+- **Authentication:** Firebase Auth & Google Sign-In with Offline Fallback
+- **Audio & Haptics:** Native Android MediaPlayer & Vibration Services
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## ⚡ Getting Started & Installation
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Prerequisites
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (v3.29+)
+- Android SDK (API Level 21 to 35)
 
-## Join the community
+### Build and Run Locally
+```bash
+# 1. Navigate to flutter project
+cd marakadhey_flutter
 
-Join our community of developers creating universal apps.
+# 2. Get dependencies
+flutter pub get
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# 3. Run on connected Android device / emulator
+flutter run
+
+# 4. Build optimized Release APK (<20 MB)
+flutter build apk --split-per-abi --release --obfuscate --split-debug-info=build/app/outputs/symbols --tree-shake-icons
+```
+
+---
+
+## 📄 License
+Designed and developed for students and career seekers worldwide.
+*Don't lose opportunities. Keep tracking with Marakadhey.*

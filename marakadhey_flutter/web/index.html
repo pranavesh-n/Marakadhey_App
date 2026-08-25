@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="description" content="Marakadhey Mobile — Never Miss Opportunities">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Marakadhey Mobile">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=3">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png?v=3"/>
+  <link rel="shortcut icon" type="image/png" href="favicon.png?v=3"/>
+
+  <title>Marakadhey Mobile</title>
+  <link rel="manifest" href="manifest.json?v=3">
+
+  <style>
+    body {
+      background-color: #0F172A;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      });
+    }
+  </script>
+  <!-- Firebase Web SDK for 100% Reliable Official Google Sign-In -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTg2H_ozgT5KyaPYqA6MY4srL8xKIgmoM",
+      authDomain: "marakadhey.firebaseapp.com",
+      projectId: "marakadhey",
+      storageBucket: "marakadhey.firebasestorage.app",
+      messagingSenderId: "1067507684798",
+      appId: "1:1067507684798:web:493c11502c6ae8e2d815ef"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    window.firebaseGoogleSignIn = function() {
+      return signInWithPopup(auth, provider).then(result => {
+        const user = result.user;
+        return JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || user.email.split('@')[0],
+          photoUrl: user.photoURL,
+          success: true
+        });
+      }).catch(error => {
+        console.error("Google Auth error:", error);
+        return JSON.stringify({
+          success: false,
+          error: error.message || error.code || "Sign-in failed"
+        });
+      });
+    };
+  </script>
+
+  <script src="flutter_bootstrap.js?v=20260822_final" async></script>
+</body>
+</html>
