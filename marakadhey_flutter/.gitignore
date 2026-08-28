@@ -4,6 +4,7 @@
 *.pyc
 *.swp
 .DS_Store
+Thumbs.db
 .atom/
 .build/
 .buildlog/
@@ -17,11 +18,6 @@ migrate_working_dir/
 *.ipr
 *.iws
 .idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -47,9 +43,22 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
-# Local Secrets
+# Local Secrets & Credentials
 **/firebase_config.dart
 !**/firebase_config.example.dart
 google-services.json
 **/google-services.json
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+!**/google-services.example.json
+*.jks
+*.keystore
+key.properties
+**/key.properties
+local.properties
+**/local.properties
 .env
+.env.*
+*.env
+serviceAccountKey.json
+**/serviceAccountKey.json

@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "1067507684798",
-    "project_id": "marakadhey",
-    "storage_bucket": "marakadhey.firebasestorage.app"
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "your-project-id",
+    "storage_bucket": "your-project-id.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1067507684798:android:9efcfeb652d586d9d815ef",
+        "mobilesdk_app_id": "YOUR_MOBILE_SDK_APP_ID",
         "android_client_info": {
           "package_name": "com.marakadhey.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1067507684798-puuuhnbroa1ci41mitft47ja4c6qcc9s.apps.googleusercontent.com",
+          "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBcauUXH7zeNXapvEoeGl62NP6XZ0pilKY"
+          "current_key": "YOUR_FIREBASE_API_KEY"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1067507684798-puuuhnbroa1ci41mitft47ja4c6qcc9s.apps.googleusercontent.com",
+              "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

@@ -9,37 +9,50 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native & Keystores
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
+*.pem
+*.crt
 *.mobileprovision
+key.properties
+**/key.properties
+local.properties
+**/local.properties
 
 # Metro
 .metro-health-check*
 
-# debug
+# debug & OS
 npm-debug.*
 yarn-debug.*
 yarn-error.*
-
-# macOS
 .DS_Store
-*.pem
+Thumbs.db
 
-# local env files
-.env*.local
-.env
+# local env and secrets
+.env*
+*.env
+*.env.*
 google-services.json
 **/google-services.json
+GoogleService-Info.plist
+**/GoogleService-Info.plist
 **/firebase_config.dart
 !**/firebase_config.example.dart
+!**/google-services.example.json
+serviceAccountKey.json
+**/serviceAccountKey.json
 
-# typescript
+# typescript & build
 *.tsbuildinfo
+build/
+coverage/
 
 example
 
