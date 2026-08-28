@@ -38,29 +38,280 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    if (!AuthService.isValidEmail(email)) {
+      _showError('Please enter a valid email address (e.g., name@outlook.com or name@zoho.com).');
+      return;
+    }
+
     if (_isRegister && name.isEmpty) {
-      _showError('Please enter your name.');
+      _showError('Please enter your full name to create an account.');
+      return;
+    }
+
+    if (_isRegister && password.length < 6) {
+      _showError('Password must be at least 6 characters long.');
       return;
     }
 
     setState(() => _isLoading = true);
     final auth = context.read<AuthService>();
 
-    bool success;
     if (_isRegister) {
-      success = await auth.registerWithEmail(name, email, password);
-    } else {
-      success = await auth.loginWithEmail(email, password);
-    }
-
-    if (mounted) {
+      final result = await auth.registerWithEmail(name, email, password);
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      if (success) {
+
+      if (result.isSuccess) {
         context.read<SecurityService>().unlock();
-      } else if (auth.errorMessage != null) {
-        _showError(auth.errorMessage!);
+      } else if (result.status == AuthStatus.emailAlreadyInUse) {
+        _showAccountExistsDialog(email);
+      } else {
+        _showError(result.message);
+      }
+    } else {
+      final result = await auth.loginWithEmail(email, password);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result.isSuccess) {
+        context.read<SecurityService>().unlock();
+      } else if (result.status == AuthStatus.accountNotFound) {
+        _showNoAccountDialog(email);
+      } else if (result.status == AuthStatus.wrongPassword) {
+        _showError('Incorrect password. Please try again.');
+      } else {
+        _showError(result.message);
       }
     }
+  }
+
+  void _showNoAccountDialog(String email) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: Colors.white,
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFD97706),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'No Account Found',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 6),
+            const Text(
+              'No registered account was found for:',
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Text(
+                email,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Kindly create a new account to get started.',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w700),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _isRegister = true;
+                _passwordController.clear();
+              });
+            },
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Create New Account',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                ),
+                SizedBox(width: 6),
+                Icon(Icons.arrow_forward_rounded, size: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAccountExistsDialog(String email) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: Colors.white,
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F2FE),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.info_outline_rounded,
+                color: Color(0xFF0284C7),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Account Exists',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 6),
+            const Text(
+              'An account is already registered for:',
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Text(
+                email,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Please sign in with your password instead.',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w700),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _isRegister = false;
+              });
+            },
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Sign In Instead',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                ),
+                SizedBox(width: 6),
+                Icon(Icons.arrow_forward_rounded, size: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleGoogle() async {

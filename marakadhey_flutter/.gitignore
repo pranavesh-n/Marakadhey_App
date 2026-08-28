@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Local Secrets
+**/firebase_config.dart
+!**/firebase_config.example.dart
+google-services.json
+**/google-services.json
+.env

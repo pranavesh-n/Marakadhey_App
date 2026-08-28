@@ -5,7 +5,7 @@ Write-Host "=========================================" -ForegroundColor Cyan
 # 1. Build Latest Flutter Web
 Write-Host "`n[1/3] Building Flutter Web..." -ForegroundColor Yellow
 Set-Location -Path "c:\marakadhey_app\marakadhey_flutter"
-& "C:\flutter\bin\flutter.bat" build web
+flutter build web --release
 
 # 2. Copy latest APK to Web root for direct public download
 Write-Host "`n[2/3] Syncing latest APKs to public web distribution..." -ForegroundColor Yellow
@@ -18,7 +18,7 @@ if (Test-Path "$apkSource\app-arm64-v8a-release.apk") {
 # 3. Deploy to Firebase Hosting
 Write-Host "`n[3/3] Deploying to Firebase Hosting (marakadhey.web.app)..." -ForegroundColor Yellow
 Set-Location -Path "c:\marakadhey_app"
-& npx --yes firebase-tools deploy --only hosting
+firebase deploy --only hosting
 
 Write-Host "`n=========================================" -ForegroundColor Green
 Write-Host "  ✓ Marakadhey is LIVE Online!" -ForegroundColor Green
