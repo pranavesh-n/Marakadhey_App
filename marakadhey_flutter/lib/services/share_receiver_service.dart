@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'date_extractor_service.dart';
 import 'url_metadata_service.dart';
 
 class SharedPayload {
   final String url;
   final String? title;
+  final DetectedDeadline? detectedDeadline;
 
-  SharedPayload({required this.url, this.title});
+  SharedPayload({required this.url, this.title, this.detectedDeadline});
 }
 
 class ShareReceiverService {
@@ -90,16 +92,26 @@ class ShareReceiverService {
       title = fullText.trim();
     }
 
-    // Auto-scrape page title from URL if not provided by browser
-    if (url.isNotEmpty && (title == null || title.isEmpty)) {
-      final fetched = await UrlMetadataService.fetchTitle(url);
-      if (fetched != null && fetched.isNotEmpty) {
-        title = fetched;
+    DetectedDeadline? deadline;
+
+    // Check if deadline is present in the shared fullText
+    deadline = DateExtractorService.extractDeadline(fullText);
+
+    // Auto-scrape page title & deadline from URL if needed
+    if (url.isNotEmpty) {
+      final meta = await UrlMetadataService.fetchMetadata(url);
+      if ((title == null || title.isEmpty) && meta.title != null) {
+        title = meta.title;
       }
+      deadline ??= meta.detectedDeadline;
+    }
+
+    if (deadline == null && title != null) {
+      deadline = DateExtractorService.extractDeadline(title);
     }
 
     if (url.isNotEmpty || (title != null && title.isNotEmpty)) {
-      return SharedPayload(url: url, title: title);
+      return SharedPayload(url: url, title: title, detectedDeadline: deadline);
     }
     return null;
   }

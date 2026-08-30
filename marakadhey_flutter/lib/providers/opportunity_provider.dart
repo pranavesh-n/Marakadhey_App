@@ -392,6 +392,27 @@ class OpportunityProvider extends ChangeNotifier {
             next = next.add(const Duration(days: 1));
           }
           return next;
+        } else if (opp.repeatPattern == 'custom' && opp.customDays.isNotEmpty) {
+          final targetWeekdays = opp.customDays.map((d) {
+            final key = d.toLowerCase();
+            if (key.startsWith('mon')) return DateTime.monday;
+            if (key.startsWith('tue')) return DateTime.tuesday;
+            if (key.startsWith('wed')) return DateTime.wednesday;
+            if (key.startsWith('thu')) return DateTime.thursday;
+            if (key.startsWith('fri')) return DateTime.friday;
+            if (key.startsWith('sat')) return DateTime.saturday;
+            if (key.startsWith('sun')) return DateTime.sunday;
+            return DateTime.monday;
+          }).toSet();
+
+          DateTime next = base.add(const Duration(days: 1));
+          for (int i = 0; i < 7; i++) {
+            if (targetWeekdays.contains(next.weekday)) {
+              return next;
+            }
+            next = next.add(const Duration(days: 1));
+          }
+          return base.add(const Duration(days: 7));
         } else {
           return base.add(const Duration(days: 7));
         }

@@ -6,6 +6,7 @@ import '../constants/app_colors.dart';
 import '../constants/categories.dart';
 import '../models/opportunity.dart';
 import '../providers/opportunity_provider.dart';
+import '../services/date_extractor_service.dart';
 import '../services/share_receiver_service.dart';
 import '../services/url_metadata_service.dart';
 import '../widgets/header_widget.dart';
@@ -40,12 +41,15 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
   Priority _selectedPriority = Priority.medium;
   String _selectedCategory = 'Internship';
   String _selectedRecurrence = 'none';
+  String _weeklyRepeatPattern = 'weekdays'; // 'weekdays', 'weekends', 'custom'
+  List<String> _selectedCustomDays = ['Mon', 'Wed', 'Fri'];
   int _leadTimeMinutes = 0;
   List<String> _tags = [];
   final bool _pushNotifications = true;
 
   bool _isScanning = false;
   String? _detectedTitle;
+  DetectedDeadline? _detectedDeadline;
   StreamSubscription? _shareSubscription;
 
   @override
@@ -57,6 +61,7 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
       _urlController.text = widget.initialUrl!;
       if (widget.initialTitle != null && widget.initialTitle!.isNotEmpty) {
         _titleController.text = widget.initialTitle!;
+        _detectedDeadline = DateExtractorService.extractDeadline(widget.initialTitle!);
       } else {
         _handleScanUrl();
       }
@@ -70,8 +75,13 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
       if (initialPayload.title != null && initialPayload.title!.isNotEmpty) {
         _titleController.text = initialPayload.title!;
         _detectedTitle = initialPayload.title;
-        _autoDetectDateTimeFromText(initialPayload.title!);
-      } else if (initialPayload.url.isNotEmpty) {
+      }
+      if (initialPayload.detectedDeadline != null) {
+        _detectedDeadline = initialPayload.detectedDeadline;
+      } else if (initialPayload.title != null) {
+        _detectedDeadline = DateExtractorService.extractDeadline(initialPayload.title!);
+      }
+      if (initialPayload.url.isNotEmpty && _detectedDeadline == null && (initialPayload.title == null || initialPayload.title!.isEmpty)) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _handleScanUrl());
       }
     }
@@ -85,8 +95,13 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
           if (payload.title != null && payload.title!.isNotEmpty) {
             _titleController.text = payload.title!;
             _detectedTitle = payload.title;
-            _autoDetectDateTimeFromText(payload.title!);
-          } else if (payload.url.isNotEmpty) {
+          }
+          if (payload.detectedDeadline != null) {
+            _detectedDeadline = payload.detectedDeadline;
+          } else if (payload.title != null) {
+            _detectedDeadline = DateExtractorService.extractDeadline(payload.title!);
+          }
+          if (payload.url.isNotEmpty && _detectedDeadline == null && (payload.title == null || payload.title!.isEmpty)) {
             _handleScanUrl();
           }
         });
@@ -178,22 +193,83 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
     setState(() {
       _isScanning = true;
       _detectedTitle = null;
+      _detectedDeadline = null;
     });
 
-    final foundTitle = await UrlMetadataService.fetchTitle(url);
+    final meta = await UrlMetadataService.fetchMetadata(url);
 
     setState(() {
       _isScanning = false;
-      if (foundTitle != null && foundTitle.isNotEmpty) {
-        _detectedTitle = foundTitle;
-        _titleController.text = foundTitle;
-        _autoDetectDateTimeFromText(foundTitle);
-      } else {
+      if (meta.title != null && meta.title!.isNotEmpty) {
+        _detectedTitle = meta.title;
+        _titleController.text = meta.title!;
+      }
+      if (meta.detectedDeadline != null) {
+        _detectedDeadline = meta.detectedDeadline;
+      } else if (meta.title != null) {
+        _detectedDeadline = DateExtractorService.extractDeadline(meta.title!);
+      }
+
+      if (_detectedDeadline != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF0F172A),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            content: Row(
+              children: [
+                const Icon(Icons.auto_awesome, color: Color(0xFFFED7AA), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Auto-detected deadline: ${_detectedDeadline!.formattedDisplay}',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else if (meta.title == null || meta.title!.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not auto-read title. Please type it in.')),
         );
       }
     });
+  }
+
+  void _applyDetectedDeadline() {
+    if (_detectedDeadline == null) return;
+    setState(() {
+      _selectedDate = _detectedDeadline!.date;
+      if (_detectedDeadline!.hour != null) {
+        _selectedHour = _detectedDeadline!.hour!.toString().padLeft(2, '0');
+        _selectedMinute = (_detectedDeadline!.minute ?? 0).toString().padLeft(2, '0');
+        if (_detectedDeadline!.ampm != null) {
+          _selectedAmPm = _detectedDeadline!.ampm!;
+        }
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF0F172A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF22C55E), size: 18),
+            const SizedBox(width: 8),
+            Text(
+              'Applied deadline: ${_detectedDeadline!.formattedDisplay}',
+              style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   DateTime _computeDateTime() {
@@ -240,6 +316,8 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
       description: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
       isRecurring: _selectedRecurrence != 'none',
       recurrenceRule: _selectedRecurrence != 'none' ? _selectedRecurrence : null,
+      repeatPattern: _selectedRecurrence == 'weekly' ? _weeklyRepeatPattern : null,
+      customDays: _selectedRecurrence == 'weekly' && _weeklyRepeatPattern == 'custom' ? _selectedCustomDays : const [],
       leadTimeMinutes: _leadTimeMinutes,
       tags: _tags,
       sendNotification: _pushNotifications,
@@ -251,11 +329,14 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
       _tagController.clear();
       _notesController.clear();
       _detectedTitle = null;
+      _detectedDeadline = null;
       _tags = [];
       _initTimeToCurrent(offsetMinutes: 5);
       _selectedPriority = Priority.medium;
       _selectedCategory = 'Internship';
       _selectedRecurrence = 'none';
+      _weeklyRepeatPattern = 'weekdays';
+      _selectedCustomDays = ['Mon', 'Wed', 'Fri'];
     });
 
     if (mounted) {
@@ -619,6 +700,51 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
                                 ),
                               ],
                             ),
+                            if (_detectedDeadline != null) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF7ED),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFFED7AA), width: 1.5),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.auto_awesome, color: AppColors.primary, size: 18),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF9A3412)),
+                                          children: [
+                                            const TextSpan(text: 'Auto-detected deadline: '),
+                                            TextSpan(
+                                              text: _detectedDeadline!.formattedDisplay,
+                                              style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFC2410C)),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      onPressed: _applyDetectedDeadline,
+                                      child: const Text('Use Date', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 14),
 
                             // Category & Priority Grid
@@ -862,12 +988,13 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
                                   value: _leadTimeMinutes,
                                   isExpanded: true,
                                   icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF64748B)),
-                                  items: AppConstants.leadTimeOptions.entries.map((e) {
-                                    return DropdownMenuItem(
-                                      value: e.key,
-                                      child: Text(e.value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B))),
-                                    );
-                                  }).toList(),
+                                  items: const [
+                                    DropdownMenuItem(value: 0, child: Text('⚡ Exact Time Only (No Advance Alert)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)))),
+                                    DropdownMenuItem(value: 15, child: Text('🔔 15 Minutes Before', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)))),
+                                    DropdownMenuItem(value: 30, child: Text('🔔 30 Minutes Before', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)))),
+                                    DropdownMenuItem(value: 60, child: Text('🔔 1 Hour Before', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)))),
+                                    DropdownMenuItem(value: 1440, child: Text('🔔 1 Day Before', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)))),
+                                  ],
                                   onChanged: (v) {
                                     if (v != null) setState(() => _leadTimeMinutes = v);
                                   },
@@ -932,6 +1059,98 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
                                 ),
                               ],
                             ),
+                            if (_selectedRecurrence == 'weekly') ...[
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Next occurrence will automatically be generated after completion.',
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B), fontStyle: FontStyle.italic),
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'REPEAT ON',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF64748B),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildRepeatPatternOption(
+                                      label: 'Weekdays (Mon-Fri)',
+                                      value: 'weekdays',
+                                      groupValue: _weeklyRepeatPattern,
+                                      onChanged: (v) => setState(() => _weeklyRepeatPattern = v!),
+                                    ),
+                                    _buildRepeatPatternOption(
+                                      label: 'Weekends (Sat-Sun)',
+                                      value: 'weekends',
+                                      groupValue: _weeklyRepeatPattern,
+                                      onChanged: (v) => setState(() => _weeklyRepeatPattern = v!),
+                                    ),
+                                    _buildRepeatPatternOption(
+                                      label: 'Custom Days',
+                                      value: 'custom',
+                                      groupValue: _weeklyRepeatPattern,
+                                      onChanged: (v) => setState(() => _weeklyRepeatPattern = v!),
+                                    ),
+                                    if (_weeklyRepeatPattern == 'custom') ...[
+                                      const SizedBox(height: 10),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 6,
+                                        children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
+                                          final isSelected = _selectedCustomDays.contains(day);
+                                          return InkWell(
+                                            borderRadius: BorderRadius.circular(8),
+                                            onTap: () {
+                                              setState(() {
+                                                if (isSelected) {
+                                                  if (_selectedCustomDays.length > 1) {
+                                                    _selectedCustomDays.remove(day);
+                                                  }
+                                                } else {
+                                                  _selectedCustomDays.add(day);
+                                                }
+                                              });
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: isSelected ? AppColors.primary : Colors.white,
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(
+                                                  color: isSelected ? AppColors.primary : const Color(0xFFCBD5E1),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                day,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: isSelected ? Colors.white : const Color(0xFF334155),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -1108,6 +1327,40 @@ class _AddReminderScreenState extends State<AddReminderScreen> {
             fontWeight: FontWeight.w800,
             color: isUrgent ? AppColors.primary : const Color(0xFF475569),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRepeatPatternOption({
+    required String label,
+    required String value,
+    required String groupValue,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final isSelected = value == groupValue;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => onChanged(value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              color: isSelected ? AppColors.primary : const Color(0xFF94A3B8),
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF475569),
+              ),
+            ),
+          ],
         ),
       ),
     );
